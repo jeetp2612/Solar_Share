@@ -35,10 +35,10 @@ pushing to GitHub, and deploying online (Vercel).
 | --- | --- |
 | **Indian currency** | All pricing, balances and ledger totals are INR (₹). Market base ₹8.5/kWh, live band ₹5.5–₹13.5, IST solar irradiance curve, Mumbai feeders (BKC–Andheri 14). |
 | **Real user accounts** | better-auth email+password → SQL tables (`user`, `session`, `account`), bcrypt-scrypt hashing, httpOnly session cookies + bearer tokens. No fake logins. |
-| **Real SQL** | PGLite (embedded PostgreSQL 16) with versioned migrations: `migrations/0001_auth.sql`, `migrations/0002_solarshare.sql` (profiles, wallets, trades, orders, `blocks`, `chain_events`). Every balance change is a `UPDATE`, auditable in the DB. |
+| **Real SQL** | PGLite (embedded PostgreSQL 16) with versioned migrations: `migrations/0001_auth.sql`, `migrations/0002_solarshare.sql`, `migrations/0003_payments.sql` (profiles, wallets, trades, orders, payment methods, `blocks`). Every balance change is a `UPDATE`, auditable in the DB. |
 | **Real blockchain-style ledger** | A genuine hash chain in Postgres: block `n` carries the SHA-256 of its canonical payload (block no, prev hash, timestamp, transactions) and links to block `n-1`. Top-ups, buys, sells, order listings and withdrawals each mint a block. `verifyChain()` recomputes every hash from the raw DB rows and reports the exact first bad block (broken link or hash mismatch). Covered by 6 unit tests, including tamper detection. |
 | **Real testnet read** | `src/lib/solar/testnet.server.ts` makes live JSON-RPC calls to public Polygon Sepolia endpoints (`eth_blockNumber`, `eth_getBlockByNumber`, `eth_syncing`). Online → shows the live head; offline → fails over cleanly with the reason (sandboxes without egress show "offline, last known state" by design). |
-| **Wallet with two options** | Every user: **Buy kWh** and **Sell kWh**, plus top-up/withdraw in ₹. Surplus kWh accumulates from the simulated panel and can be sold into the market. |
+| **Wallet with two options + UPI rails** | Every user: **Buy kWh** and **Sell kWh**, plus UPI payment methods for top-up/withdraw in ₹. Payment records are stored in SQL and linked to the ledger block that moved the wallet balance. Surplus kWh accumulates from the simulated panel and can be sold into the market. |
 
 ## Architecture
 
@@ -61,15 +61,16 @@ src/
     market-store.ts       client-side market/order book simulation
     auth/                 better-auth wiring (email + password, SQL adapter)
     db.ts                 PGLite singleton + migration runner
-  components/dashboard/   wallet card, quick trade, order book, price chart,
-                          contract feed, ledger (chain explorer) dialog
+  components/dashboard/   wallet card + UPI setup, quick trade, order book,
+                          price chart, contract feed, ledger dialog
 migrations/               versioned SQL (auth + SolarShare schema)
 ```
 
 **Flow of a trade:** click Buy 5 kWh → `solarSettleTrade` server fn → SQL
 `UPDATE wallets` + `INSERT trades` → `mintBlock()` computes the SHA-256 block and
-inserts it into `blocks` + `chain_events` → UI refetches wallet, chain head and
-the new block. The same block is what `verifyChain()` later re-hashes from raw rows.
+inserts it into `blocks` + `trades` → UI refetches wallet, chain head and the
+new block. Top-ups/withdrawals also insert a `payments` row with the UPI
+reference. The same block is what `verifyChain()` later re-hashes from raw rows.
 
 ## Verification performed
 
@@ -97,7 +98,9 @@ Out of the box the app runs on **PGLite** (real PostgreSQL 16 in WASM, in-memory
   the project root, then `npm run dev`. The dev server logs which backend it's
   on at startup.
 - Everything (accounts, wallets, trades, the ledger) lives in that one
-  database; the doc includes ready-to-run SQL to browse your data.
+  database; the doc includes ready-to-run SQL to browse your data. UPI payment
+  methods live in `payment_methods`; top-ups/withdrawals live in `payments` and
+  reference their minted ledger block.
 
 ## Known limitations (be honest in your pitch)
 

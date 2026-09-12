@@ -64,9 +64,10 @@ test("auth + solar schemas are applied in order (auth before app)", () => {
   const files = readdirSync(migrationsDir).filter((f) => f.endsWith(".sql"));
   assert.ok(files.includes("0001_auth.sql"));
   assert.ok(files.includes("0002_solarshare.sql"));
+  assert.ok(files.includes("0003_payments.sql"));
   assert.deepEqual(
     pendingMigrations(readdirSync(migrationsDir), []).map(({ name }) => name),
-    ["0001_auth.sql", "0002_solarshare.sql"],
+    ["0001_auth.sql", "0002_solarshare.sql", "0003_payments.sql"],
   );
   assert.ok(readdirSync(join(migrationsDir, "auth")).includes("0001_auth.sql"));
 });

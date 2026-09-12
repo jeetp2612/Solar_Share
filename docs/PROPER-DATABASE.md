@@ -15,10 +15,11 @@ through both options, step by step.
   - **`DATABASE_URL` is set** → the app connects to that Postgres server (`pg` driver).
   - **`DATABASE_URL` is NOT set** → the app falls back to embedded PGLite (memory).
 - Both backends execute the **same SQL** from `migrations/`
-  (`0001_auth.sql`, `0002_solarshare.sql`), applied automatically at startup —
-  tables are created for you, no manual `CREATE TABLE`.
+  (`0001_auth.sql`, `0002_solarshare.sql`, `0003_payments.sql`), applied
+  automatically at startup — tables are created for you, no manual `CREATE TABLE`.
 - **Everything** is in that one database: auth (`user`, `session`, `account`),
-  profiles, wallets, trades, orders, and the ledger (`blocks`, `chain_events`).
+  profiles, wallets, trades, orders, UPI methods, payment records, and the
+  ledger (`blocks`).
 - The dev wrapper (`scripts/with-app-env.mjs`) reads **`.env.local`** from the
   project root for you — that is where you put `DATABASE_URL` (Option C below).
 
@@ -133,6 +134,16 @@ select full_name, inr, kwh_credits, surplus_kwh from wallets w
 
 -- My open orders (bid = want to buy, ask = want to sell)
 select side, kwh, price_inr from orders where status = 'open';
+
+-- My saved UPI methods
+select label, upi_id, is_default, last_used_at
+from payment_methods
+where status = 'active';
+
+-- Wallet funding history (UPI top-ups / withdrawals linked to blocks)
+select direction, amount_inr, provider_ref, upi_id, block_no, created_at
+from payments
+order by created_at desc;
 
 -- The chain, newest first
 select block_no, tx_count, total_kwh, total_inr, timestamp,
