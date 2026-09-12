@@ -3,7 +3,7 @@ import { MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatUsd } from "@/lib/format";
+import { formatInr } from "@/lib/format";
 import { useMarket } from "@/lib/market-store";
 import type { Order, OrderSide } from "@/lib/market-data";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,6 @@ export function OrderBook() {
   const orders = useMarket((s) => s.orders);
   const selectedOrderId = useMarket((s) => s.selectedOrderId);
   const selectOrder = useMarket((s) => s.selectOrder);
-  const mode = useMarket((s) => s.mode);
   const [filter, setFilter] = useState<Filter>("all");
 
   const visible = useMemo(() => {
@@ -59,14 +58,14 @@ export function OrderBook() {
         <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-muted-foreground">
           <span>
             Best ask{" "}
-            <span className="text-primary tabular">{bestAsk ? formatUsd(bestAsk.price, 3) : "—"}</span>
+            <span className="text-primary tabular">{bestAsk ? formatInr(bestAsk.price, 3) : "—"}</span>
           </span>
           <span>
             Best bid{" "}
-            <span className="text-accent tabular">{bestBid ? formatUsd(bestBid.price, 3) : "—"}</span>
+            <span className="text-accent tabular">{bestBid ? formatInr(bestBid.price, 3) : "—"}</span>
           </span>
           <span className="tabular">
-            Spread {formatUsd(Math.max(0, spread), 3)} · Mid {formatUsd(mid, 3)}
+            Spread {formatInr(Math.max(0, spread), 3)} · Mid {formatInr(mid, 3)}
           </span>
         </div>
 
@@ -87,7 +86,6 @@ export function OrderBook() {
                   key={order.id}
                   order={order}
                   selected={selectedOrderId === order.id}
-                  prefer={mode === "consumer" ? "ask" : "bid"}
                   onSelect={() => selectOrder(selectedOrderId === order.id ? null : order.id)}
                 />
               ))}
@@ -102,12 +100,10 @@ export function OrderBook() {
 function OrderRow({
   order,
   selected,
-  prefer,
   onSelect,
 }: {
   order: Order;
   selected: boolean;
-  prefer: OrderSide;
   onSelect: () => void;
 }) {
   const isAsk = order.side === "ask";
@@ -146,7 +142,7 @@ function OrderRow({
       <td className="px-3 py-2.5 font-mono text-xs tabular">{order.kwh.toFixed(1)} kWh</td>
       <td className="px-3 py-2.5">
         <span className={cn("font-mono text-xs tabular", isAsk ? "text-primary" : "text-accent")}>
-          {formatUsd(order.price, 3)}
+          {formatInr(order.price, 3)}
         </span>
         <Badge variant="muted" className="ml-2 hidden capitalize lg:inline-flex">
           {order.side}
@@ -155,7 +151,7 @@ function OrderRow({
       <td className="px-3 py-2.5 text-right">
         <Button
           size="sm"
-          variant={selected ? "default" : prefer === order.side ? "secondary" : "outline"}
+          variant={selected ? "default" : "outline"}
           className="h-11 sm:h-9"
           onClick={onSelect}
         >

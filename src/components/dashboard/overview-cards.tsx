@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Activity, Gauge, SunMedium, Wallet } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { formatCompact, formatKwh, formatUsd } from "@/lib/format";
+import { formatCompact, formatInr, formatKwh } from "@/lib/format";
 import { useMarket } from "@/lib/market-store";
 import { cn } from "@/lib/utils";
 
@@ -11,8 +11,6 @@ export function OverviewCards() {
   const congestion = useMarket((s) => s.congestion);
   const totalTradedKwh = useMarket((s) => s.totalTradedKwh);
   const wallet = useMarket((s) => s.wallet);
-  const mode = useMarket((s) => s.mode);
-  const openConnect = useMarket((s) => s.openConnect);
   const irradiance = useMarket((s) => s.irradiance);
   const supplyKwh = useMarket((s) => s.supplyKwh);
   const demandKwh = useMarket((s) => s.demandKwh);
@@ -20,8 +18,8 @@ export function OverviewCards() {
   const up = priceDelta >= 0;
   const congestionMeta = {
     low: { label: "Low", hint: "Local solar is covering the feeder", className: "text-primary" },
-    medium: { label: "Medium", hint: "Some packets routing via the utility", className: "text-warn" },
-    high: { label: "High", hint: "Grid constrained — local fills preferred", className: "text-destructive" },
+    medium: { label: "Medium", hint: "Some load routing via the utility", className: "text-warn" },
+    high: { label: "High", hint: "Feeder constrained — local fills preferred", className: "text-destructive" },
   }[congestion];
 
   return (
@@ -29,12 +27,12 @@ export function OverviewCards() {
       <StatCard
         icon={Activity}
         label="Local energy price"
-        value={formatUsd(price, 3)}
+        value={formatInr(price, 2)}
         unit="/kWh"
         hint={
           <span className={cn("tabular", up ? "text-primary" : "text-destructive")}>
             {up ? "+" : ""}
-            {(priceDelta * 100).toFixed(2)}¢
+            {formatInr(Math.abs(priceDelta), 3)}
           </span>
         }
       />
@@ -47,7 +45,7 @@ export function OverviewCards() {
       />
       <StatCard
         icon={SunMedium}
-        label="Energy traded today"
+        label="Energy traded"
         value={formatCompact(totalTradedKwh, 1)}
         unit="kWh"
         hint={
@@ -58,20 +56,28 @@ export function OverviewCards() {
       />
       <StatCard
         icon={Wallet}
-        label={mode === "prosumer" ? "Surplus & wallet" : "Wallet balance"}
-        value={wallet ? formatUsd(wallet.usd, 2) : "—"}
+        label={wallet ? "Your wallet" : "Wallet"}
+        value={wallet ? formatInr(wallet.inr, 0) : "—"}
+        unit={wallet ? "INR" : undefined}
         hint={
           wallet ? (
             <span>
-              {mode === "prosumer"
-                ? `${formatKwh(wallet.surplusKwh)} surplus · ${(irradiance * 2.6).toFixed(1)} kW now`
-                : `${formatKwh(wallet.kwhCredits)} credits on hand`}
+              {formatKwh(wallet.kwhCredits)} on hand ·{" "}
+              <span className="text-primary">{wallet.surplusKwh.toFixed(1)} kWh</span> to sell
             </span>
           ) : (
-            <button type="button" onClick={() => openConnect(true)} className="text-primary hover:underline">
-              Connect to trade
-            </button>
+            <a href="/login" className="text-primary hover:underline">
+              Create profile to trade
+            </a>
           )
+        }
+        meter={
+          wallet ? (
+            <p className="mt-2 text-[11px] text-muted-foreground tabular">
+              Roof {wallet.generatingKw > 0.05 ? `generating ${wallet.generatingKw.toFixed(2)} kW` : "idle"} · sun{" "}
+              {(irradiance * 100).toFixed(0)}%
+            </p>
+          ) : undefined
         }
       />
     </section>

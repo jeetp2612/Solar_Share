@@ -6,7 +6,8 @@ import { OrderBook } from "./order-book";
 import { QuickTrade } from "./quick-trade";
 import { PriceChart } from "./price-chart";
 import { ContractFeed } from "./contract-feed";
-import { WalletDialog } from "./wallet-dialog";
+import { WalletCard } from "./wallet-card";
+import { LedgerDialog } from "./ledger-dialog";
 
 export function Dashboard() {
   const startLive = useMarket((s) => s.startLive);
@@ -30,10 +31,13 @@ export function Dashboard() {
         </section>
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.9fr)]">
           <PriceChart />
-          <ContractFeed />
+          <div className="flex flex-col gap-4">
+            <WalletCard />
+            <ContractFeed />
+          </div>
         </section>
       </main>
-      <WalletDialog />
+      <LedgerDialog />
     </div>
   );
 }

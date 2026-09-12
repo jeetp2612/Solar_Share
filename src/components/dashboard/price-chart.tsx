@@ -10,7 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatClock, formatUsd } from "@/lib/format";
+import { formatClock, formatInr } from "@/lib/format";
 import { useMarket } from "@/lib/market-store";
 
 type Row = {
@@ -75,7 +75,7 @@ export function PriceChart() {
                   tickLine={false}
                   axisLine={false}
                   width={52}
-                  tickFormatter={(v: number) => `$${v.toFixed(2)}`}
+                  tickFormatter={(v: number) => `₹${v.toFixed(1)}`}
                   domain={["auto", "auto"]}
                 />
                 <YAxis yAxisId="energy" hide domain={[0, "auto"]} />
@@ -151,8 +151,8 @@ function ChartTooltip({
   const row = payload[0].payload;
   return (
     <div className="rounded-lg bg-popover px-3 py-2 text-xs text-popover-foreground shadow-[var(--shadow-card-hover)]">
-      <p className="mb-1 font-mono text-muted-foreground">{row.time} CT</p>
-      <p className="tabular text-foreground">Price {formatUsd(row.price, 3)}</p>
+      <p className="mb-1 font-mono text-muted-foreground">{row.time} IST</p>
+      <p className="tabular text-foreground">Price {formatInr(row.price, 2)}/kWh</p>
       <p className="tabular text-primary">Supply {row.supply.toFixed(0)} kWh</p>
       <p className="tabular text-accent">Demand {row.demand.toFixed(0)} kWh</p>
     </div>
