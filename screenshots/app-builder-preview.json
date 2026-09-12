@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "SolarShare",
+      "hasCanvas": false,
+      "bodyTextLen": 2358,
+      "bodyTextHash": "d17adfbb0d42beb8452f88597ac3c1da06fb1203205cd550c2ad1db7ddb1418f",
+      "bodyTextPrefix": "SolarShare Local energy exchange Consumer Prosumer Connect walle",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "SolarShare",
+      "hasCanvas": false,
+      "bodyTextLen": 2202,
+      "bodyTextHash": "4b51462363e18cc6e08b6db7f7361afee81922ef7253f22fe53eee87ae9d9197",
+      "bodyTextPrefix": "SolarShare Buy Sell Connect Live 47 nodes Irradiance 97% LOCAL E",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
