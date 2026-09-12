@@ -20,9 +20,9 @@ import {
   type PricePoint,
   type Transaction,
   type Wallet,
-} from "./market-data";
-import { mockOrderId, mockTxHash } from "./format";
-import type { FillLeg, SettleError, SettleResult } from "./solar/types";
+} from "./market-data.ts";
+import { mockOrderId, mockTxHash } from "./format.ts";
+import type { FillLeg, SettleError, SettleResult } from "./solar/types.ts";
 import {
   applyDealToBook,
   directDeal,
@@ -33,7 +33,7 @@ import {
   round2,
   splitInstalments,
   summariseBook,
-} from "./deal";
+} from "./deal.ts";
 
 type SettleFn = (legs: FillLeg[]) => Promise<SettleResult | SettleError | null>;
 type ListRestFn = (side: "ask" | "bid", kwh: number, price: number) => Promise<boolean>;
