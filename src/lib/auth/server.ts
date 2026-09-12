@@ -105,10 +105,23 @@ const LOCAL_DEV_ORIGINS: string[] = [
   "http://127.0.0.1:8080",
   "http://[::1]:8080",
 ];
+
+const LAN_DEV_ORIGINS: string[] = [
+  "http://10.*:8080",
+  "http://192.168.*:8080",
+  ...Array.from({ length: 16 }, (_, i) => `http://172.${16 + i}.*:8080`),
+];
+// Host-header forms of the same (Host includes the port, e.g. 10.200.15.202:8080).
+const LAN_DEV_HOSTS: string[] = [
+  "10.*:8080",
+  "192.168.*:8080",
+  ...Array.from({ length: 16 }, (_, i) => `172.${16 + i}.*:8080`),
+]; 
+
 const baseURL = explicitBaseURL ?? {
   // Include loopback hosts so dynamic baseURL resolves for local email/password
   // (not only the preview wildcard).
-  allowedHosts: [...previewAllowedHosts, "localhost", "127.0.0.1", "[::1]"],
+  allowedHosts: [...previewAllowedHosts, "localhost", "127.0.0.1", "[::1]" , ...LAN_DEV_HOSTS],
   // `auto` → trust both http:// and https:// expansions of allowedHosts
   // (preview is https; local dev is http).
   protocol: "auto" as const,
@@ -125,6 +138,7 @@ const trustedOrigins: string[] = explicitBaseURL
       // Full-origin wildcards (matched against Origin)
       ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
       ...LOCAL_DEV_ORIGINS,
+      ...LAN_DEV_ORIGINS,
     ];
 
 const databaseUrl = env("DATABASE_URL");
