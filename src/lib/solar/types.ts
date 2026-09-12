@@ -3,8 +3,9 @@
  * functions in `api.server.ts` and client components).
  *
  * Money is INR. Energy is kWh. Every user settlement (buy / sell / top-up /
- * withdraw / listing) is recorded in Postgres (migrations/0002_solarshare.sql)
- * and mints a hash-chained block (see `ledger.server.ts`).
+ * withdraw / listing) is recorded in Postgres (migrations/0002_solarshare.sql +
+ * migrations/0003_payments.sql) and mints a hash-chained block (see
+ * `ledger.server.ts`).
  */
 
 /** Kinds of settlement that become on-chain blocks. */
@@ -65,6 +66,38 @@ export type UserOrderRow = {
   createdAt: string;
 };
 
+export type PaymentMethod = {
+  id: string;
+  type: "upi";
+  label: string;
+  upiId: string;
+  holderName: string | null;
+  isDefault: boolean;
+  status: "active" | "disabled";
+  lastUsedAt: string | null;
+  createdAt: string;
+};
+
+export type PaymentRecord = {
+  id: string;
+  direction: "topup" | "withdraw";
+  status: "pending" | "confirmed" | "failed";
+  amountInr: number;
+  provider: "UPI";
+  providerRef: string;
+  methodLabel: string | null;
+  upiId: string | null;
+  upiIntent: string | null;
+  blockNo: number | null;
+  createdAt: string;
+};
+
+export type SavePaymentMethodArgs = {
+  upiId: string;
+  label?: string;
+  holderName?: string;
+};
+
 import type { Wallet } from "../market-data";
 
 export type ProfileRow = {
@@ -78,6 +111,8 @@ export type SolarState = {
   profile: ProfileRow;
   wallet: Wallet;
   myOrders: UserOrderRow[];
+  paymentMethods: PaymentMethod[];
+  recentPayments: PaymentRecord[];
   chainHead: ChainHead;
 };
 
@@ -102,12 +137,13 @@ export type SettleResult = {
   /** INR actually moved. */
   amountInr: number;
   kwh: number;
+  payment?: PaymentRecord;
 };
 
 export type SettleError = {
   ok: false;
   message: string;
-  reason: "funds" | "surplus" | "invalid" | "chain";
+  reason: "funds" | "surplus" | "invalid" | "chain" | "payment";
 };
 
 /**

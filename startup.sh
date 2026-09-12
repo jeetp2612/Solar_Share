@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
-cd /workspace
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+cd "$ROOT"
 # :8081 is QA-only — a revive must never inherit a stale built-output preview.
 # Called directly, not via npm: no node_modules needed, so nothing to wait for.
 node scripts/preview.mjs stop || true

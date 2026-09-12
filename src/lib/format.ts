@@ -31,6 +31,13 @@ export function shortAddr(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+export function maskUpiId(upiId: string): string {
+  const [name, handle] = upiId.split("@");
+  if (!name || !handle) return upiId;
+  const visible = name.length <= 3 ? name : `${name.slice(0, 3)}…${name.slice(-1)}`;
+  return `${visible}@${handle}`;
+}
+
 /** IST clock (India Standard Time, UTC+5:30). */
 export function formatClock(ts: number): string {
   return new Intl.DateTimeFormat("en-IN", {

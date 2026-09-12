@@ -5,15 +5,24 @@ import { toast } from "sonner";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useMarket } from "@/lib/market-store";
 import {
+  solarAddPaymentMethod,
   solarGetState,
   solarListOrder,
+  solarSetDefaultPaymentMethod,
   solarSettleTrade,
   solarTestnet,
   solarTopUp,
   solarVerifyChain,
   solarWithdraw,
 } from "./api";
-import type { FillLeg, SettleResult, TestnetStatus, ChainVerification } from "./types";
+import type {
+  ChainVerification,
+  FillLeg,
+  PaymentMethod,
+  SavePaymentMethodArgs,
+  SettleResult,
+  TestnetStatus,
+} from "./types";
 
 /**
  * Client bridge to the SQL + ledger backend.
@@ -78,6 +87,8 @@ export function useSolarState() {
     profile: query.data?.profile ?? null,
     wallet: query.data?.wallet ?? null,
     myOrders: query.data?.myOrders ?? [],
+    paymentMethods: query.data?.paymentMethods ?? [],
+    recentPayments: query.data?.recentPayments ?? [],
     chainHead: query.data?.chainHead ?? null,
     loading: query.isPending && Boolean(user),
     goSignIn,
@@ -116,24 +127,51 @@ export function useSolarActions() {
       return result;
     },
 
-    topUp: async (amount: number): Promise<boolean> => {
-      if (!guard()) return false;
-      const result = await solarTopUp({ data: { amount } });
+    addPaymentMethod: async (input: SavePaymentMethodArgs): Promise<PaymentMethod | null> => {
+      if (!guard()) return null;
+      const result = await solarAddPaymentMethod({ data: input });
       if (result.ok) {
-        applySettled(result);
-        toast.success(`Wallet topped up with ₹${result.amountInr.toFixed(0)} · block ${result.block.blockNo}`);
+        void queryClient.invalidateQueries({ queryKey: ["solar"] });
+        toast.success(`UPI method saved: ${result.method.label}`);
+        return result.method;
+      }
+      toast.error(result.message);
+      return null;
+    },
+
+    setDefaultPaymentMethod: async (methodId: string): Promise<boolean> => {
+      if (!guard()) return false;
+      const result = await solarSetDefaultPaymentMethod({ data: { methodId } });
+      if (result.ok) {
+        void queryClient.invalidateQueries({ queryKey: ["solar"] });
         return true;
       }
       toast.error(result.message);
       return false;
     },
 
-    withdraw: async (amount: number): Promise<boolean> => {
+    topUp: async (amount: number, methodId?: string): Promise<boolean> => {
       if (!guard()) return false;
-      const result = await solarWithdraw({ data: { amount } });
+      const result = await solarTopUp({ data: { amount, methodId } });
       if (result.ok) {
         applySettled(result);
-        toast.success(`Withdrew ₹${result.amountInr.toFixed(0)} to your bank · block ${result.block.blockNo}`);
+        toast.success(
+          `UPI top-up confirmed: ₹${result.amountInr.toFixed(0)} · ref ${result.payment?.providerRef ?? "recorded"} · block ${result.block.blockNo}`,
+        );
+        return true;
+      }
+      toast.error(result.message);
+      return false;
+    },
+
+    withdraw: async (amount: number, methodId?: string): Promise<boolean> => {
+      if (!guard()) return false;
+      const result = await solarWithdraw({ data: { amount, methodId } });
+      if (result.ok) {
+        applySettled(result);
+        toast.success(
+          `UPI withdrawal queued: ₹${result.amountInr.toFixed(0)} · ref ${result.payment?.providerRef ?? "recorded"} · block ${result.block.blockNo}`,
+        );
         return true;
       }
       toast.error(result.message);
