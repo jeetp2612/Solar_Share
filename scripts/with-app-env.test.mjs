@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -9,8 +9,10 @@ import {
   APP_ENV_REL_PATH,
   mergeAppEnv,
   parseAppEnv,
+  parseDotEnv,
   projectRoot,
   readAppEnv,
+  readDotEnv,
 } from "./with-app-env.mjs";
 
 const execFileAsync = promisify(execFile);
@@ -127,4 +129,83 @@ test("the CLI still runs when invoked through a symlinked path", async () => {
     PRINT_FLAG,
   ]);
   assert.equal(stdout, "true");
+});
+
+test("parseDotEnv reads KEY=VALUE lines, comments, export and quotes", () => {
+  assert.deepEqual(
+    parseDotEnv(
+      [
+        "# a comment",
+        "",
+        "DATABASE_URL=postgres://user:pw@localhost:5432/solarshare",
+        "QUOTED=\"hello world\" # trailing comment after quotes stays",
+        "SINGLE='v1'",
+        "export EXPORTED=yes",
+        "UNQUOTED=abc # inline comment",
+        "NOEQUALS",
+        "9BAD=1",
+        "=nokey",
+      ].join("\n"),
+    ),
+    {
+      DATABASE_URL: "postgres://user:pw@localhost:5432/solarshare",
+      QUOTED: "hello world",
+      SINGLE: "v1",
+      EXPORTED: "yes",
+      UNQUOTED: "abc",
+    },
+  );
+});
+
+test("readDotEnv is a no-op without files; .env.local beats .env", () => {
+  assert.deepEqual(readDotEnv(mkdtempSync(join(tmpdir(), "app-env-dotenv-none-"))), {});
+  const root = mkdtempSync(join(tmpdir(), "app-env-dotenv-"));
+  writeFileSync(join(root, ".env"), "DATABASE_URL=postgres://from-dot-env\nVITE_A=1\n");
+  assert.deepEqual(readDotEnv(root), {
+    DATABASE_URL: "postgres://from-dot-env",
+    VITE_A: "1",
+  });
+  writeFileSync(join(root, ".env.local"), "DATABASE_URL=postgres://from-local\n");
+  assert.deepEqual(readDotEnv(root), {
+    DATABASE_URL: "postgres://from-local",
+    VITE_A: "1",
+  });
+});
+
+test("a .env.local value reaches the wrapped command (DATABASE_URL flow)", async () => {
+  // Full wiring: the wrapper copied into a scratch workspace (projectRoot()
+  // is script-relative, so the scratch root becomes its root) with a
+  // .env.local — the exact flow "put DATABASE_URL in .env.local, npm run dev".
+  const root = mkdtempSync(join(tmpdir(), "app-env-e2e-"));
+  mkdirSync(join(root, "scripts"), { recursive: true });
+  copyFileSync(join(projectRoot(), "scripts/with-app-env.mjs"), join(root, "scripts/with-app-env.mjs"));
+  writeFileSync(
+    join(root, ".env.local"),
+    'DATABASE_URL="postgres://u:p@localhost:5432/solarshare"\n',
+  );
+  const { stdout } = await execFileAsync(process.execPath, [
+    join(root, "scripts/with-app-env.mjs"),
+    process.execPath,
+    "-e",
+    'process.stdout.write(String(process.env.DATABASE_URL));',
+  ]);
+  assert.equal(stdout, "postgres://u:p@localhost:5432/solarshare");
+});
+
+test("an explicit process-env DATABASE_URL beats .env.local", async () => {
+  const root = mkdtempSync(join(tmpdir(), "app-env-e2e-override-"));
+  mkdirSync(join(root, "scripts"), { recursive: true });
+  copyFileSync(join(projectRoot(), "scripts/with-app-env.mjs"), join(root, "scripts/with-app-env.mjs"));
+  writeFileSync(join(root, ".env.local"), "DATABASE_URL=postgres://from-file\n");
+  const { stdout } = await execFileAsync(
+    process.execPath,
+    [
+      join(root, "scripts/with-app-env.mjs"),
+      process.execPath,
+      "-e",
+      "process.stdout.write(String(process.env.DATABASE_URL));",
+    ],
+    { env: { ...process.env, DATABASE_URL: "postgres://from-process" } },
+  );
+  assert.equal(stdout, "postgres://from-process");
 });

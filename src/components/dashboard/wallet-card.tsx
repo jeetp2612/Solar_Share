@@ -130,26 +130,45 @@ export function WalletCard() {
               </div>
 
               {fundOpen ? (
-                <div className="flex items-center gap-2 rounded-lg bg-background p-2">
-                  <Banknote className="size-4 shrink-0 text-primary" />
-                  <Input
-                    type="number"
-                    min={1}
-                    step={50}
-                    value={amount}
-                    onChange={(e) => setAmount(Number(e.target.value))}
-                    className="h-8 font-mono tabular"
-                    aria-label="Amount in rupees"
-                  />
-                  <span className="text-xs text-muted-foreground">₹</span>
-                  <Button
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => void doFund()}
-                    className="h-8 shrink-0"
-                  >
-                    {busy ? <Loader2 className="size-3.5 animate-spin" /> : fundOpen === "topup" ? "Add" : "Send"}
-                  </Button>
+                <div className="space-y-1.5 rounded-lg bg-background p-2">
+                  <div className="flex gap-1.5">
+                    {[100, 250, 500, 1000].map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setAmount(v)}
+                        className={cn(
+                          "flex-1 rounded-md border px-1 py-1 font-mono text-[11px] tabular transition-colors",
+                          amount === v
+                            ? "border-primary/50 bg-primary/10 text-primary"
+                            : "border-border/70 text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                        )}
+                      >
+                        ₹{v}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Banknote className="size-4 shrink-0 text-primary" />
+                    <Input
+                      type="number"
+                      min={1}
+                      step={50}
+                      value={amount}
+                      onChange={(e) => setAmount(Number(e.target.value))}
+                      className="h-8 font-mono tabular"
+                      aria-label="Amount in rupees"
+                    />
+                    <span className="text-xs text-muted-foreground">₹</span>
+                    <Button
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => void doFund()}
+                      className="h-8 shrink-0"
+                    >
+                      {busy ? <Loader2 className="size-3.5 animate-spin" /> : fundOpen === "topup" ? "Add" : "Send"}
+                    </Button>
+                  </div>
                 </div>
               ) : null}
             </div>

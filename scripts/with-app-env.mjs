@@ -27,6 +27,15 @@ import { fileURLToPath } from "node:url";
 
 export const APP_ENV_REL_PATH = ".grok/app-env.json";
 
+/**
+ * dotenv-style files, loaded lowest-first: `.env` then `.env.local`, so the
+ * local (usually git-ignored) file wins. Unlike app-env.json these may carry
+ * any key — they are how a developer points the app at a real Postgres
+ * (`DATABASE_URL=…`) without exporting anything. A real `process.env` entry
+ * always beats both.
+ */
+export const DOT_ENV_FILES = [".env", ".env.local"];
+
 const VITE_PREFIX = "VITE_";
 
 /**
@@ -63,6 +72,51 @@ export function readAppEnv(root) {
 /** File values under the process environment: an explicit override wins. */
 export function mergeAppEnv(appEnv, processEnv) {
   return { ...appEnv, ...processEnv };
+}
+
+/**
+ * Parse a dotenv document (KEY=VALUE lines). Keeps any well-formed key —
+ * this is not a build-flag carrier, so no VITE_ filter here. Ignores blanks,
+ * `#` comments, malformed keys and lines without `=`. Surrounding quotes are
+ * stripped; an unquoted value's trailing ` # comment` is dropped.
+ */
+export function parseDotEnv(text) {
+  const env = {};
+  for (const rawLine of String(text).split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const eq = line.indexOf("=");
+    if (eq <= 0) continue;
+    let key = line.slice(0, eq).trim();
+    if (key.startsWith("export ")) key = key.slice("export ".length).trim();
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
+    let value = line.slice(eq + 1).trim();
+    if (value.startsWith('"') || value.startsWith("'")) {
+      // Quoted: the value ends at the matching close quote; anything after
+      // (e.g. a comment) is ignored.
+      const quote = value[0];
+      const close = value.indexOf(quote, 1);
+      value = close >= 0 ? value.slice(1, close) : value.slice(1);
+    } else {
+      const comment = value.indexOf(" #");
+      if (comment >= 0) value = value.slice(0, comment).trim();
+    }
+    env[key] = value;
+  }
+  return env;
+}
+
+/** dotenv files under `root`, lowest-first (`.env.local` beats `.env`). */
+export function readDotEnv(root) {
+  let merged = {};
+  for (const file of DOT_ENV_FILES) {
+    try {
+      merged = { ...merged, ...parseDotEnv(readFileSync(join(root, file), "utf8")) };
+    } catch {
+      // Absent file = nothing to merge.
+    }
+  }
+  return merged;
 }
 
 /**
@@ -110,7 +164,9 @@ function main(argv) {
     console.error("usage: node scripts/with-app-env.mjs <command> [args…]");
     process.exit(2);
   }
-  const env = mergeAppEnv(readAppEnv(projectRoot()), process.env);
+  const root = projectRoot();
+  // Precedence (high wins): process.env > .env.local > .env > app-env.json.
+  const env = mergeAppEnv(mergeAppEnv(readAppEnv(root), readDotEnv(root)), process.env);
   const child = spawn(command, args, { stdio: "inherit", env });
   // The dev server is long-running and is stopped by signalling this wrapper.
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {

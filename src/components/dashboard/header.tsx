@@ -67,11 +67,11 @@ export function Header() {
                   <span className="flex size-7 items-center justify-center rounded-sm bg-primary/15 text-[11px] font-semibold text-primary">
                     {initials}
                   </span>
-                  <span className="hidden text-left sm:block">
+                  <span className="text-left">
                     <span className="block max-w-32 truncate text-xs leading-none">
                       {profile?.fullName ?? user.displayName ?? "Member"}
                     </span>
-                    <span className="mt-0.5 block text-[10px] text-muted-foreground tabular">
+                    <span className="mt-0.5 hidden text-[10px] text-muted-foreground tabular sm:block">
                       {wallet ? `${formatInr(wallet.inr, 0)} · ${formatKwh(wallet.kwhCredits, 0)}` : "opening wallet…"}
                     </span>
                   </span>

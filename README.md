@@ -78,6 +78,20 @@ the new block. The same block is what `verifyChain()` later re-hashes from raw r
   tx details → withdraw ₹100 (block minted) → final wallet state consistent.
 - SSR: dashboard renders fully server-side (₹ balances, market, wallet).
 
+## Database — embedded now, one setting away from real Postgres
+
+Out of the box the app runs on **PGLite** (real PostgreSQL 16 in WASM, in-memory
+— data resets on server restart). To use a **proper persistent database**, set
+`DATABASE_URL` — no code changes, same SQL, migrations apply automatically:
+
+- **Step-by-step guide: [`docs/PROPER-DATABASE.md`](docs/PROPER-DATABASE.md)**
+  (free Neon cloud Postgres in ~5 minutes, or Postgres on your own machine)
+- Quick version: put `DATABASE_URL=postgres://…` in a **`.env.local`** file in
+  the project root, then `npm run dev`. The dev server logs which backend it's
+  on at startup.
+- Everything (accounts, wallets, trades, the ledger) lives in that one
+  database; the doc includes ready-to-run SQL to browse your data.
+
 ## Known limitations (be honest in your pitch)
 
 - PGLite is in-memory per process: data resets on server restart (swap in real

@@ -176,6 +176,13 @@ async function createSql(): Promise<Sql> {
         "or a server route loader, never from client code.",
     );
   }
+  // Tell the developer which backend they're on — the difference between
+  // "data survives restarts" (Postgres) and "fresh every boot" (PGLite).
+  console.log(
+    dbSource === "neon"
+      ? "[db] using Postgres from DATABASE_URL (persistent)"
+      : "[db] using embedded PGLite (in-memory — data resets on restart; set DATABASE_URL for a persistent DB, see docs/PROPER-DATABASE.md)",
+  );
   return dbSource === "neon" ? createNeonSql() : createPgliteSql();
 }
 
