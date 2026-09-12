@@ -33,7 +33,6 @@ const SORTS: { key: Sort; label: string }[] = [
  */
 export function OrderBook() {
   const orders = useMarket((s) => s.orders);
-  const price = useMarket((s) => s.price);
   const selectedOrderId = useMarket((s) => s.selectedOrderId);
   const selectOrder = useMarket((s) => s.selectOrder);
   const openDeal = useMarket((s) => s.openDeal);
@@ -178,7 +177,7 @@ export function OrderBook() {
           <Metric
             label="Mid / spread"
             value={formatInr(book.mid, 2)}
-            sub={`spread ${formatInr(book.spread, 3)} · ref ${formatInr(price, 2)}`}
+            sub={`spread ${formatInr(book.spread, 3)} · ${asks.length} asks / ${bids.length} bids`}
           />
           <Metric
             label="Depth"

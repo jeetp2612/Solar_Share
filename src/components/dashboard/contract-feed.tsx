@@ -198,19 +198,26 @@ function FeedRow({
         tx.mine && "ring-1 ring-primary/25",
       )}
     >
-      <button type="button" onClick={onToggle} className="block w-full text-left" aria-expanded={expanded}>
-        <div className="flex items-start gap-2.5">
-          <span className={cn("mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md", meta.chip)}>
-            <Icon className="size-3.5" />
-          </span>
-          <div className="min-w-0 flex-1">
+      <div className="flex items-start gap-2.5">
+        <span className={cn("mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md", meta.chip)}>
+          <Icon className="size-3.5" />
+        </span>
+        <button
+          type="button"
+          onClick={onToggle}
+          className="min-w-0 flex-1 text-left"
+          aria-expanded={expanded}
+        >
+          <div className="min-w-0">
             <Headline tx={tx} />
             <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] text-muted-foreground tabular">
               {energy ? (
                 <>
-                  <span className="font-mono text-primary">{formatKwh(tx.kwh)}</span>
-                  <span className="font-mono">@ {formatInr(tx.price, 2)}/kWh</span>
+                  <span className="font-mono text-primary">@ {formatInr(tx.price, 2)}/kWh</span>
                   <span className="font-mono text-foreground">{formatInr(tx.totalInr, 2)}</span>
+                  <span className="font-mono text-muted-foreground/80">
+                    {tx.kind === "deal" ? "direct P2P" : "book match"}
+                  </span>
                 </>
               ) : tx.totalInr > 0 ? (
                 <span className="font-mono text-foreground">{formatInr(tx.totalInr, 0)}</span>
@@ -227,45 +234,38 @@ function FeedRow({
               ) : null}
             </div>
           </div>
-          <div className="shrink-0 text-right">
-            <span className="block font-mono text-[10px] text-muted-foreground tabular" title={formatClock(tx.timestamp)}>
-              {relativeTime(tx.timestamp)}
-            </span>
-            <span className="mt-1 flex items-center justify-end gap-1">
-              {tx.instalment ? (
-                <span className="inline-flex items-center gap-0.5 rounded bg-accent/15 px-1 font-mono text-[9px] text-accent tabular">
-                  <Layers className="size-2.5" />
-                  {tx.instalment.index}/{tx.instalment.of}
-                </span>
-              ) : null}
-              {tx.block != null ? (
-                <span
-                  role="link"
-                  tabIndex={0}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenLedger();
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.stopPropagation();
-                      onOpenLedger();
-                    }
-                  }}
-                  className="cursor-pointer rounded bg-secondary px-1 font-mono text-[9px] text-foreground tabular hover:bg-primary/15 hover:text-primary"
-                  title="Open the ledger"
-                >
-                  blk {tx.block.toLocaleString("en-IN")}
-                </span>
-              ) : (
-                <span className="rounded bg-secondary px-1 font-mono text-[9px] text-muted-foreground">
-                  local
-                </span>
-              )}
-            </span>
-          </div>
+        </button>
+        <div className="shrink-0 text-right">
+          <span
+            className="block font-mono text-[10px] text-muted-foreground tabular"
+            title={formatClock(tx.timestamp)}
+          >
+            {relativeTime(tx.timestamp)}
+          </span>
+          <span className="mt-1 flex items-center justify-end gap-1">
+            {tx.instalment ? (
+              <span className="inline-flex items-center gap-0.5 rounded bg-accent/15 px-1 font-mono text-[9px] text-accent tabular">
+                <Layers className="size-2.5" />
+                {tx.instalment.index}/{tx.instalment.of}
+              </span>
+            ) : null}
+            {tx.block != null ? (
+              <button
+                type="button"
+                onClick={onOpenLedger}
+                className="rounded bg-secondary px-1 font-mono text-[9px] text-foreground tabular hover:bg-primary/15 hover:text-primary"
+                title="Open the ledger"
+              >
+                blk {tx.block.toLocaleString("en-IN")}
+              </button>
+            ) : (
+              <span className="rounded bg-secondary px-1 font-mono text-[9px] text-muted-foreground">
+                local
+              </span>
+            )}
+          </span>
         </div>
-      </button>
+      </div>
 
       {expanded ? (
         <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
@@ -320,9 +320,7 @@ function Headline({ tx }: { tx: Transaction }) {
           ? "withdrew"
           : tx.kind === "grid"
             ? ""
-            : tx.kind === "deal"
-              ? "dealt"
-              : "sold";
+            : "sold";
 
   if (tx.kind === "grid") {
     return (
