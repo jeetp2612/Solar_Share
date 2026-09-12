@@ -56,9 +56,18 @@ test("non-.sql entries are dropped (readdir also yields the auth/ directory)", (
   assert.deepEqual(pendingMigrations(["auth", "README.md"], []), []);
 });
 
-test("the auth schema ships outside the globbed directory", () => {
+test("auth + solar schemas are applied in order (auth before app)", () => {
+  // Sign-in is ON, so 0001_auth.sql is copied up into migrations/ (the PGLite
+  // glob + Neon migrator both apply non-recursive top-level files), followed
+  // by the app schema. The original copy still lives in migrations/auth/.
   const migrationsDir = join(projectRoot(), "migrations");
-  assert.deepEqual(pendingMigrations(readdirSync(migrationsDir), []), []);
+  const files = readdirSync(migrationsDir).filter((f) => f.endsWith(".sql"));
+  assert.ok(files.includes("0001_auth.sql"));
+  assert.ok(files.includes("0002_solarshare.sql"));
+  assert.deepEqual(
+    pendingMigrations(readdirSync(migrationsDir), []).map(({ name }) => name),
+    ["0001_auth.sql", "0002_solarshare.sql"],
+  );
   assert.ok(readdirSync(join(migrationsDir, "auth")).includes("0001_auth.sql"));
 });
 

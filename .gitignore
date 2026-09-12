@@ -1,0 +1,3 @@
+# Local database config / secrets — NEVER commit these (docs/PROPER-DATABASE.md)
+.env
+.env.local

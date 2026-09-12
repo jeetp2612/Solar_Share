@@ -150,6 +150,10 @@ export default defineConfig(({ command, isPreview }) => ({
     host: "0.0.0.0",
     port: 8080,
     strictPort: true,
+    // Live-preview proxies reach us under dynamic `*.e2b.app` hosts (sandbox
+    // preview) in addition to localhost (localhost + IPs are allowed by Vite
+    // by default). Vite wildcard syntax is a LEADING DOT: ".e2b.app".
+    allowedHosts: [".e2b.app"],
   },
   preview: {
     host: "127.0.0.1",

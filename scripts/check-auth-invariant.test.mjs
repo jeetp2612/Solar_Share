@@ -90,9 +90,10 @@ test("only a divergence warns the smoke verdict", () => {
   }
 });
 
-test("the build side resolves the template's shipped app-env", () => {
-  assert.equal(buildAuthEnabled(projectRoot(), {}), false);
-  assert.equal(buildAuthEnabled(projectRoot(), { VITE_AUTH_ENABLED: "true" }), true);
+test("the build side resolves this app's shipped app-env (auth ON)", () => {
+  // SolarShare ships VITE_AUTH_ENABLED=true; an explicit override still wins.
+  assert.equal(buildAuthEnabled(projectRoot(), {}), true);
+  assert.equal(buildAuthEnabled(projectRoot(), { VITE_AUTH_ENABLED: "false" }), false);
 });
 
 test("the CLI reports rather than silently passing when run via a symlink", async () => {

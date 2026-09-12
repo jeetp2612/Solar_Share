@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
@@ -35,6 +36,23 @@ export const Route = createRootRoute({
   component: RootDocument,
 });
 
+/**
+ * React Query client — SSR gets a fresh client per request; the browser
+ * reuses one across navigations.
+ */
+let browserQueryClient: QueryClient | null = null;
+function getQueryClient(): QueryClient {
+  if (typeof window === "undefined") {
+    return new QueryClient({
+      defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
+    });
+  }
+  browserQueryClient ??= new QueryClient({
+    defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
+  });
+  return browserQueryClient;
+}
+
 function RootDocument() {
   return (
     <html lang="en" className="dark antialiased" suppressHydrationWarning>
@@ -43,12 +61,14 @@ function RootDocument() {
       </head>
       <body className="bg-background text-foreground font-sans">
         <PreviewHostBridge />
-        <AuthProvider>
-          <TooltipProvider delayDuration={180}>
-            <Outlet />
-            <Toaster />
-          </TooltipProvider>
-        </AuthProvider>
+        <QueryClientProvider client={getQueryClient()}>
+          <AuthProvider>
+            <TooltipProvider delayDuration={180}>
+              <Outlet />
+              <Toaster />
+            </TooltipProvider>
+          </AuthProvider>
+        </QueryClientProvider>
         <Scripts />
       </body>
     </html>

@@ -1,21 +1,26 @@
-export function formatUsd(value: number, digits = 3): string {
-  return new Intl.NumberFormat("en-US", {
+export function formatInr(value: number, digits = 2): string {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "USD",
+    currency: "INR",
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   }).format(value);
 }
 
+/** Price per kWh, e.g. "₹8.50/kWh". */
+export function formatInrPerKwh(value: number): string {
+  return `${formatInr(value, 2)}/kWh`;
+}
+
 export function formatKwh(value: number, digits = 1): string {
-  return `${value.toLocaleString("en-US", {
+  return `${value.toLocaleString("en-IN", {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   })} kWh`;
 }
 
 export function formatCompact(value: number, digits = 1): string {
-  return value.toLocaleString("en-US", {
+  return value.toLocaleString("en-IN", {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   });
@@ -26,13 +31,14 @@ export function shortAddr(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+/** IST clock (India Standard Time, UTC+5:30). */
 export function formatClock(ts: number): string {
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("en-IN", {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    timeZone: "America/Chicago",
+    timeZone: "Asia/Kolkata",
   }).format(new Date(ts));
 }
 

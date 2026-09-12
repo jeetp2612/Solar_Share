@@ -1,12 +1,14 @@
 import { useEffect } from "react";
 import { useMarket } from "@/lib/market-store";
 import { Header, StatusBar } from "./header";
+import { WelcomeBanner } from "./welcome-banner";
 import { OverviewCards } from "./overview-cards";
 import { OrderBook } from "./order-book";
 import { QuickTrade } from "./quick-trade";
 import { PriceChart } from "./price-chart";
 import { ContractFeed } from "./contract-feed";
-import { WalletDialog } from "./wallet-dialog";
+import { WalletCard } from "./wallet-card";
+import { LedgerDialog } from "./ledger-dialog";
 
 export function Dashboard() {
   const startLive = useMarket((s) => s.startLive);
@@ -23,6 +25,7 @@ export function Dashboard() {
       <Header />
       <StatusBar />
       <main className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 pb-10 sm:px-6 sm:py-6 lg:px-8">
+        <WelcomeBanner />
         <OverviewCards />
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.9fr)]">
           <OrderBook />
@@ -30,10 +33,13 @@ export function Dashboard() {
         </section>
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.9fr)]">
           <PriceChart />
-          <ContractFeed />
+          <div className="flex flex-col gap-4">
+            <WalletCard />
+            <ContractFeed />
+          </div>
         </section>
       </main>
-      <WalletDialog />
+      <LedgerDialog />
     </div>
   );
 }

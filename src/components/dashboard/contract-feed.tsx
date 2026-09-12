@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Check, Copy } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatClock, formatUsd, shortAddr } from "@/lib/format";
+import { formatClock, formatInr, shortAddr } from "@/lib/format";
 import { useMarket } from "@/lib/market-store";
 import { cn } from "@/lib/utils";
 
@@ -21,8 +21,8 @@ export function ContractFeed() {
     <Card className="flex min-h-0 flex-col">
       <CardHeader>
         <div>
-          <CardTitle>Smart contract feed</CardTitle>
-          <CardDescription>Immutable EnergyPool settlements on the local matcher.</CardDescription>
+          <CardTitle>Trade feed</CardTitle>
+          <CardDescription>Settlements on the feeder — member trades are on-chain.</CardDescription>
         </div>
       </CardHeader>
       <CardContent className="pt-3">
@@ -48,8 +48,8 @@ export function ContractFeed() {
                 </span>
               </div>
               <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                <span className="font-mono tabular">{formatUsd(tx.price, 3)}/kWh</span>
-                <span className="font-mono">blk {tx.block.toLocaleString()}</span>
+                <span className="font-mono tabular">{formatInr(tx.price, 2)}/kWh</span>
+                <span className="font-mono">{tx.block != null ? `blk ${tx.block.toLocaleString("en-IN")}` : "local"}</span>
                 <button
                   type="button"
                   onClick={() => copyHash(tx.txHash)}
