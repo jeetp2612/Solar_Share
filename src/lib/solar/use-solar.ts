@@ -201,7 +201,9 @@ export function useSolarActions() {
       return solarVerifyChain();
     },
 
-    testnet: () => solarTestnet() as Promise<TestnetStatus>,
+    /** Public-chain bridge reading. `force` bypasses the server-side cache. */
+    testnet: (force?: boolean) =>
+      solarTestnet({ data: { force } }) as Promise<TestnetStatus>,
 
     /** Convenience: sign-in redirect for trade CTAs. */
     requireAuth: (message: string) => {

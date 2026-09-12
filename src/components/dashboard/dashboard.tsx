@@ -9,6 +9,7 @@ import { PriceChart } from "./price-chart";
 import { ContractFeed } from "./contract-feed";
 import { WalletCard } from "./wallet-card";
 import { LedgerDialog } from "./ledger-dialog";
+import { DealSheet } from "./deal-sheet";
 
 export function Dashboard() {
   const startLive = useMarket((s) => s.startLive);
@@ -40,6 +41,7 @@ export function Dashboard() {
         </section>
       </main>
       <LedgerDialog />
+      <DealSheet />
     </div>
   );
 }

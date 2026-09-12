@@ -146,17 +146,69 @@ export type SettleError = {
   reason: "funds" | "surplus" | "invalid" | "chain" | "payment";
 };
 
+/** Why the public-chain bridge is (or is not) showing a live head. */
+export type BridgeReason =
+  | "ok"
+  | "checking"
+  | "no-egress"
+  | "timeout"
+  | "rate-limited"
+  | "http-error"
+  | "wrong-network"
+  | "rpc-error";
+
+/** The endpoint that produced the current reading (shown instead of a raw URL list). */
+export type RpcEndpointInfo = {
+  url: string;
+  label: string;
+  provider: string;
+};
+
 /**
- * Live status of the public Polygon Sepolia testnet (read-only bridge).
- * When the sandbox/deploy has no internet egress this reports `online: false`
- * and the app keeps running on its embedded ledger.
+ * Live status of the public **Polygon Amoy** testnet (chainId 80002) via a
+ * read-only JSON-RPC bridge. When the environment has no internet egress this
+ * reports `online: false` with the last known head marked `stale`, plus a
+ * classified `reason` and plain-language `headline`/`detail` — never a raw RPC
+ * error string. The app keeps running on its embedded ledger either way.
  */
 export type TestnetStatus = {
-  chain: "Polygon Sepolia";
+  /** Display name, e.g. "Polygon Amoy". */
+  chain: string;
+  network: string;
+  networkKind: "testnet" | "mainnet";
+  /** Verified via `eth_chainId`; null when nothing could be read. */
+  chainId: number | null;
+  chainIdExpected: number;
+  explorerName: string;
+  /** A verified live read happened on this call. */
   online: boolean;
+  /** Showing the last verified head because the chain is unreachable now. */
+  stale: boolean;
+  /** Endpoint pinned by the deployer via `SOLARSHARE_RPC_URL`. */
+  pinned: boolean;
   blockNumber: number | null;
   latestBlockHash: string | null;
+  /** ISO timestamp of the head block (null if the RPC omits it). */
+  latestBlockTime: string | null;
   peerCount: number | null;
+  syncing: boolean;
+  latencyMs: number | null;
+  /** The endpoint actually used — stable across refreshes (sticky). */
+  endpoint: RpcEndpointInfo | null;
+  /** Labels of endpoints tried this round, in order. */
+  endpointsTried: string[];
+  explorerBlockUrl: string | null;
+  explorerHashUrl: string | null;
+  reason: BridgeReason;
+  /** One-line, human-readable summary for the UI. */
+  headline: string;
+  /** Longer explanation of what the status means. */
+  detail: string | null;
+  /** Raw technical error, for the debug line only. */
   error: string | null;
   checkedAt: number;
+  /** Age of the displayed reading. */
+  ageMs: number;
+  /** Hint for the client poller countdown. */
+  nextCheckInMs: number;
 };
