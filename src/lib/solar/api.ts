@@ -350,6 +350,8 @@ const listOrderSchema = z.object({
   kwh: z.number().min(0.1).max(500),
   priceInr: z.number().min(1).max(500),
 });
+/** `force` bypasses the bridge's short server-side cache (manual "Refresh now"). */
+const testnetQuerySchema = z.object({ force: z.boolean().optional() }).optional();
 
 export const solarGetState = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -723,8 +725,9 @@ export const solarRecentBlocks = createServerFn({ method: "GET" })
   });
 
 export const solarTestnet = createServerFn({ method: "GET" })
+  .validator(testnetQuerySchema)
   .middleware([authMiddleware])
-  .handler(async (): Promise<TestnetStatus> => {
+  .handler(async ({ data }): Promise<TestnetStatus> => {
     const { getTestnetStatus } = await import("./testnet.server");
-    return getTestnetStatus();
+    return getTestnetStatus(Boolean(data?.force));
   });
