@@ -53,6 +53,7 @@ pushing to GitHub, and deploying online (Vercel).
 | **Real SQL** | PGLite (embedded PostgreSQL 16) with versioned migrations: `migrations/0001_auth.sql`, `migrations/0002_solarshare.sql`, `migrations/0003_payments.sql` (profiles, wallets, trades, orders, payment methods, `blocks`). Every balance change is a `UPDATE`, auditable in the DB. |
 | **Real blockchain-style ledger** | A genuine hash chain in Postgres: block `n` carries the SHA-256 of its canonical payload (block no, prev hash, timestamp, transactions) and links to block `n-1`. Top-ups, buys, sells, order listings and withdrawals each mint a block. `verifyChain()` recomputes every hash from the raw DB rows and reports the exact first bad block (broken link or hash mismatch). Covered by 6 unit tests, including tamper detection. |
 | **Real testnet read** | `src/lib/solar/testnet.server.ts` makes live JSON-RPC calls to public **Polygon Amoy** endpoints (`eth_chainId`, `eth_blockNumber`, `eth_getBlockByNumber`, `net_peerCount`, `eth_syncing`). The chainId is verified before a reading is accepted, the last healthy endpoint is sticky (so the URL stops rotating) and `SOLARSHARE_RPC_URL` pins one. Online → live head + explorer link; unreachable → last known head marked stale, with a classified plain-language reason (`no-egress`, `timeout`, `rate-limited`, `wrong-network`…). |
+| **Live ledger UI, no reload** | The ledger dialog folds each poll into the list instead of replacing it (`src/lib/solar/ledger-feed.ts`): identical blocks keep their object identity so their rows never re-render, a new block is never spliced in — it queues and lands **one at a time** (or on demand via “Add one / Add all” while you are mid-read), rows inserted above you are scroll-anchored, a failed read keeps the last known ledger, and polling goes quiet while the tab is hidden. Covered by 14 unit tests. |
 | **Partial lots & instalments** | `src/lib/deal.ts` is a pure, unit-tested engine: book sweep with per-leg fills, direct deals on part of a named neighbour's lot (`minSplitKwh` per seller), offer/counter inside a tolerance band, instalment splitting that always sums to the requested volume, and quotes with grid fee, slippage and margin versus the mid price. |
 | **Wallet with two options + UPI rails** | Every user: **Buy kWh** and **Sell kWh**, plus UPI payment methods for top-up/withdraw in ₹. Payment records are stored in SQL and linked to the ledger block that moved the wallet balance. Surplus kWh accumulates from the simulated panel and can be sold into the market. |
 
@@ -69,6 +70,7 @@ src/
     solar/
       api.ts              server functions (createServerFn + auth middleware)
       ledger-core.ts      pure ledger: genesis, sha256 hashing, verifyBlocks  (+ tests)
+      ledger-feed.ts      live list: incremental merge, one-at-a-time arrivals  (+ tests)
       ledger.server.ts    SQL ledger: migrations-aware PGLite, mint/verify/inspect
       network-core.ts     pure bridge helpers: endpoints, sticky order, error
                           classification, monotonic head, hash grouping (+ tests)
@@ -96,12 +98,14 @@ reference. The same block is what `verifyChain()` later re-hashes from raw rows.
 
 ## Verification performed
 
-- `npm test` — 82/82 app tests pass: ledger core (deterministic hashing, genesis
+- `npm test` — 105/105 app tests pass: ledger core (deterministic hashing, genesis
   invariants, tamper detection: changed tx → hash mismatch, missing block → broken
-  link, altered prev hash → broken link), the trading engine (sweep order, limit
-  prices, partial lots, minimum slices, offer/counter, instalment sums, budget →
-  kWh, fee maths) and the network bridge (single-network endpoint list, sticky
-  ordering, monotonic head, error classification, hash grouping).
+  link, altered prev hash → broken link), the live ledger list (unchanged polls
+  change nothing, new blocks queue then release one at a time, in-place row
+  replacement, caps), the trading engine (sweep order, limit prices, partial lots,
+  minimum slices, offer/counter, instalment sums, budget → kWh, fee maths) and the
+  network bridge (single-network endpoint list, sticky ordering, monotonic head,
+  error classification, hash grouping).
 - Full HTTP end-to-end (`node scripts/solar-e2e-smoke.mjs`, mirrors exactly what the
   browser sends to the server functions): sign-in → wallet auto-create (₹500) → top-up ₹250 (block minted) →
   buy 5 kWh @ ₹8.2 (₹41 debited, 5 kWh credited, block minted) → list 3 kWh ask

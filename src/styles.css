@@ -127,6 +127,35 @@ body,
   }
 }
 
+/*
+ * A ledger block row arriving in a live list. Runs once, on mount: rows that
+ * were already there keep their DOM node, so a background poll never re-animates
+ * the whole list (which used to read as a full reload). It ends on the row's own
+ * background/border so there is no snap-back frame.
+ */
+.block-land {
+  animation: block-land 620ms var(--ease-smooth-out);
+}
+
+@keyframes block-land {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+    background-color: color-mix(in oklab, var(--color-primary) 12%, var(--color-background));
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-primary) 35%, transparent);
+  }
+  55% {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    background-color: var(--color-background);
+    box-shadow: 0 0 0 1px transparent;
+  }
+}
+
 .stagger-in > * {
   animation: fade-up 400ms var(--ease-smooth-out) both;
 }
@@ -158,6 +187,7 @@ body,
 @media (prefers-reduced-motion: reduce) {
   .live-dot,
   .row-fresh,
+  .block-land,
   .stagger-in > * {
     animation: none;
   }
