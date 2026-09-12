@@ -17,6 +17,11 @@ npm run dev        # http://localhost:8080
 npm test           # app tests (incl. ledger tamper detection) + scaffold checks
 ```
 
+📖 **First time running this project?** Follow the complete step-by-step guide:
+**[`docs/LOCAL-SETUP.md`](docs/LOCAL-SETUP.md)** — VS Code, free Neon database
+(5 minutes), running locally, the demo script (sign up → ₹500 → trade → chain),
+pushing to GitHub, and deploying online (Vercel).
+
 1. Sign up with an email + password (stored in SQL, hashed with better-auth).
 2. Your profile + wallet are created on first load — you start with a **₹500 welcome credit**
    and a simulated 3 kWp rooftop that generates energy through the Mumbai daylight curve.
@@ -84,8 +89,10 @@ Out of the box the app runs on **PGLite** (real PostgreSQL 16 in WASM, in-memory
 — data resets on server restart). To use a **proper persistent database**, set
 `DATABASE_URL` — no code changes, same SQL, migrations apply automatically:
 
-- **Step-by-step guide: [`docs/PROPER-DATABASE.md`](docs/PROPER-DATABASE.md)**
-  (free Neon cloud Postgres in ~5 minutes, or Postgres on your own machine)
+- **Complete first-run guide (VS Code → Neon → run → deploy):
+  [`docs/LOCAL-SETUP.md`](docs/LOCAL-SETUP.md)**
+- **Database details** (Neon vs local Postgres, browsing your data, FAQ):
+  [`docs/PROPER-DATABASE.md`](docs/PROPER-DATABASE.md)
 - Quick version: put `DATABASE_URL=postgres://…` in a **`.env.local`** file in
   the project root, then `npm run dev`. The dev server logs which backend it's
   on at startup.

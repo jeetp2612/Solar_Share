@@ -29,7 +29,10 @@ function apiPost(path, body) {
   return curl(["-X", "POST", `${BASE}${path}`, "-H", `Host: ${HOST}`, "-H", `Origin: http://${HOST}`, "-H", "Content-Type: application/json", "--data", `@${f}`]);
 }
 
-const signin = apiPost("/api/auth/sign-in/email", { email: "aarav@test.in", password: "solar1234" });
+const signin = apiPost("/api/auth/sign-in/email", {
+  email: process.env.E2E_EMAIL ?? "aarav@test.in",
+  password: process.env.E2E_PASSWORD ?? "solar1234",
+});
 const token = JSON.parse(signin.body).token;
 if (!token) { console.error("SIGNIN FAILED", signin); process.exit(1); }
 console.log("1. sign-in OK, token", token.slice(0, 10) + "…");
