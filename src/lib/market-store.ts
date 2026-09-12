@@ -119,7 +119,7 @@ const idleProgress: DealProgress = {
 
 type MarketState = {
   live: boolean;
-  /** Signed-in user's wallet (authoritative copy from SQL). */
+  /** Signed-in user's wallet (authoritative copy from SQL). Only replaced when a number moved. */
   wallet: Wallet | null;
   price: number;
   priceDelta: number;
@@ -276,6 +276,27 @@ function myOrder(side: "ask" | "bid", kwh: number, price: number, peerName: stri
     allowsInstalments: true,
     fresh: true,
   };
+}
+
+/**
+ * `wallet` is an object, so writing a structurally identical copy every poll
+ * would re-render every card that reads it. Compare the fields instead and let
+ * the store keep its existing reference when nothing actually moved.
+ */
+function sameWallet(a: Wallet | null, b: Wallet | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return (
+    a.inr === b.inr &&
+    a.kwhCredits === b.kwhCredits &&
+    a.surplusKwh === b.surplusKwh &&
+    a.panelKwp === b.panelKwp &&
+    a.generatingKw === b.generatingKw &&
+    a.totalEarnedInr === b.totalEarnedInr &&
+    a.totalSpentInr === b.totalSpentInr &&
+    a.totalSoldKwh === b.totalSoldKwh &&
+    a.totalBoughtKwh === b.totalBoughtKwh
+  );
 }
 
 export const useMarket = create<MarketState>((set, get) => ({
@@ -497,8 +518,10 @@ export const useMarket = create<MarketState>((set, get) => ({
     });
   },
 
-  setWallet: (w) => set({ wallet: w }),
-  setBlock: (b) => set({ block: b }),
+  setWallet: (w) =>
+    // Skip the write when the numbers are unchanged — no re-render, no flash.
+    set((s) => (sameWallet(s.wallet, w) ? s : { wallet: w })),
+  setBlock: (b) => set((s) => (s.block === b ? s : { block: b })),
   setLedgerOpen: (open) => set({ ledgerOpen: open }),
   selectOrder: (id) => set({ selectedOrderId: id }),
   openDeal: (id) => set({ dealOrderId: id, dealProgress: idleProgress }),
